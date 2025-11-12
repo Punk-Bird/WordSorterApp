@@ -8,7 +8,7 @@ namespace WordSorterApp.Services
 {
     public class WordSorter
     {
-        // Быстрая сортировка (QuickSort)
+        // Быстрая сортировка (QuickSort) - возвращает время в миллисекундах
         public (List<SortResult>, long) QuickSortWords(string text)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -25,7 +25,7 @@ namespace WordSorterApp.Services
             return (result, stopwatch.ElapsedMilliseconds);
         }
 
-        // ABC-сортировка (поразрядная для строк)
+        // ABC-сортировка - возвращает время в миллисекундах
         public (List<SortResult>, long) AbcSortWords(string text)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -42,12 +42,45 @@ namespace WordSorterApp.Services
             return (result, stopwatch.ElapsedMilliseconds);
         }
 
+        // Метод для точного измерения времени в тактах процессора
+        public (List<SortResult>, long) QuickSortWordsPrecise(string text)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var words = SplitText(text);
+
+            if (words.Length == 0)
+                return (new List<SortResult>(), 0);
+
+            QuickSort(words, 0, words.Length - 1);
+
+            var result = CountWords(words);
+            stopwatch.Stop();
+
+            // Возвращаем время в микросекундах для более точных измерений
+            return (result, stopwatch.ElapsedTicks * 1000000L / Stopwatch.Frequency);
+        }
+
+        public (List<SortResult>, long) AbcSortWordsPrecise(string text)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var words = SplitText(text);
+
+            if (words.Length == 0)
+                return (new List<SortResult>(), 0);
+
+            var sortedWords = AbcSort(words.ToList());
+
+            var result = CountWords(sortedWords.ToArray());
+            stopwatch.Stop();
+
+            return (result, stopwatch.ElapsedTicks * 1000000L / Stopwatch.Frequency);
+        }
+
         private string[] SplitText(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
                 return new string[0];
 
-            // Разбиваем текст на слова, игнорируя пунктуацию и пробелы
             char[] separators = { ' ', ',', '.', '!', '?', ';', ':', '\t', '\n', '\r' };
             return text.Split(separators, StringSplitOptions.RemoveEmptyEntries)
                       .Where(word => !string.IsNullOrWhiteSpace(word))
@@ -87,7 +120,6 @@ namespace WordSorterApp.Services
             (arr[i], arr[j]) = (arr[j], arr[i]);
         }
 
-        // ABC-сортировка (рекурсивная поразрядная сортировка для строк)
         private List<string> AbcSort(List<string> words, int position = 0)
         {
             if (words.Count <= 1)
@@ -113,7 +145,6 @@ namespace WordSorterApp.Services
                 groups[currentChar].Add(word);
             }
 
-            // Сортируем группы по символам
             var sortedGroups = groups.OrderBy(g => g.Key);
 
             foreach (var group in sortedGroups)
@@ -154,7 +185,6 @@ namespace WordSorterApp.Services
                 }
             }
 
-            // Добавляем последнее слово
             results.Add(new SortResult { Word = currentWord, Count = count });
             return results;
         }
